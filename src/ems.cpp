@@ -1555,13 +1555,13 @@ void ems_sendRawTelegram(char * telegram) {
     EMS_Sys_Status.txRetryCount    = 0;                   // reset retry counter
 
     // get first value, which should be the src
-    if (p = strtok(telegram, " ,")) { // delimiter
+    if ((p = strtok(telegram, " ,"))) { // delimiter
         strlcpy(value, p, sizeof(value));
         EMS_TxTelegram.data[0] = (uint8_t)strtol(value, 0, 16);
     }
     // and interate until end
     while (p != 0) {
-        if (p = strtok(NULL, " ,")) {
+        if ((p = strtok(NULL, " ,"))) {
             strlcpy(value, p, sizeof(value));
             uint8_t val                  = (uint8_t)strtol(value, 0, 16);
             EMS_TxTelegram.data[++count] = val;
