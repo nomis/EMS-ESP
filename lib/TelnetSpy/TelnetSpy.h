@@ -46,12 +46,12 @@
  * Change the message which will be send to the telnet client after a session
  * is established.
  * Default: "Connection established via TelnetSpy.\n"
- *		void setWelcomeMsg(char* msg);
+ *		void setWelcomeMsg(const char* msg);
  *
  * Change the message which will be send to the telnet client if another
  * session is already established.
  * Default: "TelnetSpy: Only one connection possible.\n"
- *		void setRejectMsg(char* msg);
+ *		void setRejectMsg(const char* msg);
  *
  * Change the amount of characters to collect before sending a telnet block.
  * Default: 64
@@ -174,8 +174,8 @@ class TelnetSpy : public Stream {
     ~TelnetSpy();
     void     handle(void);
     void     setPort(uint16_t portToUse);
-    void     setWelcomeMsg(char * msg);
-    void     setRejectMsg(char * msg);
+    void     setWelcomeMsg(const char * msg);
+    void     setRejectMsg(const char * msg);
     void     setMinBlockSize(uint16_t minSize);
     void     setCollectingTime(uint16_t colTime);
     void     setMaxBlockSize(uint16_t maxSize);

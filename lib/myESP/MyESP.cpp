@@ -364,7 +364,7 @@ void MyESP::_telnetDisconnected() {
 
 // Initialize the telnet server
 void MyESP::_telnet_setup() {
-    SerialAndTelnet.setWelcomeMsg((char *)"");
+    SerialAndTelnet.setWelcomeMsg("");
     SerialAndTelnet.setCallbackOnConnect([this]() { _telnetConnected(); });
     SerialAndTelnet.setCallbackOnDisconnect([this]() { _telnetDisconnected(); });
     SerialAndTelnet.setDebugOutput(false);

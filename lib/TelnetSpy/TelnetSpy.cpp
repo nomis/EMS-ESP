@@ -106,14 +106,14 @@ void TelnetSpy::setPort(uint16_t portToUse) {
     }
 }
 
-void TelnetSpy::setWelcomeMsg(char * msg) {
+void TelnetSpy::setWelcomeMsg(const char * msg) {
     if (welcomeMsg) {
         free(welcomeMsg);
     }
     welcomeMsg = strdup(msg);
 }
 
-void TelnetSpy::setRejectMsg(char * msg) {
+void TelnetSpy::setRejectMsg(const char * msg) {
     if (rejectMsg) {
         free(rejectMsg);
     }
