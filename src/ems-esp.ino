@@ -562,8 +562,7 @@ uint8_t _readHexNumber() {
 
 // used to read the next string from an input buffer
 char * _readWord() {
-    char * word = strtok(NULL, ", \n");
-    return word;
+    return strtok(NULL, ", \n");
 }
 
 // initiate a force scan by sending type read requests from 0 to FF to the thermostat
