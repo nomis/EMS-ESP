@@ -870,7 +870,7 @@ void _processType(uint8_t * telegram, uint8_t length) {
  * Check if hot tap water or heating is active
  * using a quick hack for checking the heating. Selected Flow Temp >= 70
  */
-bool _checkActive() {
+void _checkActive() {
     // hot tap water, using flow to check insread of the burner power
     EMS_Boiler.tapwaterActive = ((EMS_Boiler.wWCurFlow != 0) && (EMS_Boiler.burnGas == EMS_VALUE_INT_ON));
 
@@ -955,7 +955,7 @@ void _process_UBAMonitorFast(uint8_t type, uint8_t * data, uint8_t length) {
     }
 
     // at this point do a quick check to see if the hot water or heating is active
-    (void)_checkActive();
+    _checkActive();
 }
 
 /**
