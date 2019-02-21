@@ -439,7 +439,7 @@ void TelnetSpy::setDebugOutput(bool en) {
 #ifdef ESP8266
         os_install_putc1((void *)TelnetSpy_putc); // Set system printing (os_printf) to TelnetSpy
         system_set_os_print(true);
-#else // ESP32 \
+#else // ESP32
 	  // ToDo: How can be done this for ESP32 ?
 #endif
     } else {
@@ -447,7 +447,7 @@ void TelnetSpy::setDebugOutput(bool en) {
 #ifdef ESP8266
             system_set_os_print(false);
             os_install_putc1((void *)TelnetSpy_ignore_putc); // Ignore system printing
-#else                                                        // ESP32 \
+#else                                                        // ESP32
 															 // ToDo: How can be done this for ESP32 ?
 #endif
             actualObject = NULL;
