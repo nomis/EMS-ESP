@@ -661,10 +661,14 @@ void MyESP::_telnetHandle() {
                 _telnetCommand(_command);
             }
             break;
-        case '\b': // handle backspace in input: put a space in last char
+        case '\b': // (^H) handle backspace in input: put a space in last char
+        case 0x7F: // (^?)
             if (charsRead > 0) {
                 _command[--charsRead] = '\0';
                 if (_use_serial) {
+                        if (c != '\b') {
+                            SerialAndTelnet.serialPrint('\b');
+                        }
                         SerialAndTelnet.serialPrint(' ');
                         SerialAndTelnet.serialPrint('\b');
                 }
