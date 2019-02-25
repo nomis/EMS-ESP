@@ -664,7 +664,10 @@ void MyESP::_telnetHandle() {
         case '\b': // handle backspace in input: put a space in last char
             if (charsRead > 0) {
                 _command[--charsRead] = '\0';
-                SerialAndTelnet << byte('\b') << byte(' ') << byte('\b');
+                if (_use_serial) {
+                        SerialAndTelnet.serialPrint(' ');
+                        SerialAndTelnet.serialPrint('\b');
+                }
             }
             break;
         case '?':
