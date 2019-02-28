@@ -49,7 +49,8 @@
 /* EMS UART transfer status */
 typedef enum {
     EMS_RX_STATUS_IDLE,
-    EMS_RX_STATUS_BUSY // Rx package is being received
+    EMS_RX_STATUS_BUSY, // Rx package is being received
+    EMS_RX_STATUS_ERROR // UART or buffer overflow
 } _EMS_RX_STATUS;
 
 typedef enum {
