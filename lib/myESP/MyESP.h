@@ -66,7 +66,7 @@
 #define COLOR_CYAN "\x1B[0;36m"
 #define COLOR_WHITE "\x1B[0;37m"
 #define COLOR_BOLD_ON "\x1B[1m"
-#define COLOR_BOLD_OFF "\x1B[21m"
+#define COLOR_BOLD_OFF "\x1B[22m"
 
 
 // SPIFFS
