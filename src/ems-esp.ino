@@ -1046,7 +1046,7 @@ void showerCheck() {
     // if already in cold mode, ignore all this logic until we're out of the cold blast
     if (!EMSESP_Shower.doingColdShot) {
         // is the hot water running?
-        if (EMS_Boiler.tapwaterActive) {
+        if (EMS_Boiler.tapwaterActive == 1) {
             // if heater was previously off, start the timer
             if (EMSESP_Shower.timerStart == 0) {
                 // hot water just started...
