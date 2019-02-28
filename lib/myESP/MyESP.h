@@ -180,7 +180,7 @@ class MyESP {
     void                     _telnetCommand(char * commandLine);
     char *                   _telnet_readWord();
     void                     _telnet_setup();
-    char *                   _command;               // the input command from either Serial or Telnet
+    char                     _command[TELNET_MAX_COMMAND_LENGTH]; // the input command from either Serial or Telnet
     command_t *              _helpProjectCmds;       // Help of commands setted by project
     uint8_t                  _helpProjectCmds_count; // # available commands
     void                     _consoleShowHelp();

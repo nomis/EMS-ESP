@@ -26,7 +26,6 @@ MyESP::MyESP() {
 
     _helpProjectCmds       = NULL;
     _helpProjectCmds_count = 0;
-    _command               = (char *)malloc(TELNET_MAX_COMMAND_LENGTH); // reserve buffer for Serial/Telnet commands
 
     _use_serial                = false;
     _mqtt_host                 = NULL;
@@ -56,7 +55,6 @@ MyESP::~MyESP() {
 
 // end
 void MyESP::end() {
-    free(_command);
     SerialAndTelnet.end();
     jw.disconnect();
 }
