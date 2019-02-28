@@ -287,14 +287,14 @@ void showInfo() {
 
     // active stats
     if (ems_getBusConnected()) {
-        myDebug("  Hot tap water is %s", (EMS_Boiler.tapwaterActive ? "running" : "off"));
-        myDebug("  Central Heating is %s", (EMS_Boiler.heatingActive ? "active" : "off"));
+        myDebug("  Hot tap water is %s", EMS_Boiler.tapwaterActive == EMS_VALUE_INT_NOTSET ? "?" : (EMS_Boiler.tapwaterActive ? "running" : "off"));
+        myDebug("  Central Heating is %s", EMS_Boiler.heatingActive == EMS_VALUE_INT_NOTSET ? "?" : (EMS_Boiler.heatingActive ? "active" : "off"));
     }
 
     // UBAParameterWW
     _renderBoolValue("Warm Water activated", EMS_Boiler.wWActivated);
     _renderBoolValue("Warm Water circulation pump available", EMS_Boiler.wWCircPump);
-    myDebug("  Warm Water is set to %s", (EMS_Boiler.wWComfort ? "Comfort" : "ECO"));
+    myDebug("  Warm Water is set to %s", EMS_Boiler.wWComfort == EMS_VALUE_INT_NOTSET ? "?" : (EMS_Boiler.wWComfort ? "Comfort" : "ECO"));
     _renderIntValue("Warm Water selected temperature", "C", EMS_Boiler.wWSelTemp);
     _renderIntValue("Warm Water desired temperature", "C", EMS_Boiler.wWDesiredTemp);
 
