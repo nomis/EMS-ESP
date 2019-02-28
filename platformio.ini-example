@@ -6,7 +6,7 @@ env_default = d1_mini
 [common]
 platform = espressif8266
 flash_mode = dout
-build_flags = -g -w
+build_flags = -Os -flto -Wall -Wextra -Werror -Wno-missing-field-initializers -Wno-unused-parameter -Wno-unused-variable
 
 wifi_settings =
 ; hard code if you prefer. Recommendation is to set from within the app when in Serial or AP mode
