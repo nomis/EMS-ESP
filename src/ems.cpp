@@ -24,39 +24,39 @@ CircularBuffer<_EMS_TxTelegram, EMS_TX_TELEGRAM_QUEUE_MAX> EMS_TxQueue; // FIFO 
 // callbacks per type
 
 // generic
-void _process_Version(uint8_t type, uint8_t * data, uint8_t length);
+void _process_Version(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // Boiler and Buderus devices
-void _process_UBAMonitorFast(uint8_t type, uint8_t * data, uint8_t length);
-void _process_UBAMonitorSlow(uint8_t type, uint8_t * data, uint8_t length);
-void _process_UBAMonitorWWMessage(uint8_t type, uint8_t * data, uint8_t length);
-void _process_UBAParameterWW(uint8_t type, uint8_t * data, uint8_t length);
-void _process_UBATotalUptimeMessage(uint8_t type, uint8_t * data, uint8_t length);
-void _process_UBAParametersMessage(uint8_t type, uint8_t * data, uint8_t length);
-void _process_SetPoints(uint8_t type, uint8_t * data, uint8_t length);
+void _process_UBAMonitorFast(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_UBAMonitorSlow(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_UBAMonitorWWMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_UBAParameterWW(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_UBATotalUptimeMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_UBAParametersMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_SetPoints(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // Common for most thermostats
-void _process_RCTime(uint8_t type, uint8_t * data, uint8_t length);
-void _process_RCOutdoorTempMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_RCTime(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_RCOutdoorTempMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // RC10
-void _process_RC10Set(uint8_t type, uint8_t * data, uint8_t length);
-void _process_RC10StatusMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_RC10Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_RC10StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // RC20
-void _process_RC20Set(uint8_t type, uint8_t * data, uint8_t length);
-void _process_RC20StatusMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_RC20Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_RC20StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // RC30
-void _process_RC30Set(uint8_t type, uint8_t * data, uint8_t length);
-void _process_RC30StatusMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_RC30Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_RC30StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // RC35
-void _process_RC35Set(uint8_t type, uint8_t * data, uint8_t length);
-void _process_RC35StatusMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_RC35Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
+void _process_RC35StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // Easy
-void _process_EasyStatusMessage(uint8_t type, uint8_t * data, uint8_t length);
+void _process_EasyStatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 /*
  * Recognized EMS types and the functions they call to process the telegrams
@@ -728,10 +728,7 @@ void _ems_processTelegram(uint8_t * telegram, uint8_t length) {
                 myDebug("<--- %s(0x%02X) received", EMS_Types[i].typeString, type);
             }
             // call callback function to process it
-            // as we only handle complete telegrams (not partial) check that the offset is 0
-            if (offset == EMS_ID_NONE) {
-                (void)EMS_Types[i].processType_cb(type, data, length - 5);
-            }
+            (void)EMS_Types[i].processType_cb(type, offset, data, length - 5);
         }
     }
 }
@@ -882,80 +879,131 @@ void _checkActive() {
     }
 }
 
+#define OFFSET(__value_offset) ((__value_offset) - offset)
+#define EXISTS(__value_offset, __value_length) (offset <= (__value_offset) && (offset + length) >= ((__value_offset) + (__value_length)))
+
 /**
  * UBAParameterWW - type 0x33 - warm water parameters
  * received only after requested (not broadcasted)
  */
-void _process_UBAParameterWW(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.wWActivated   = (data[1] == 0xFF); // 0xFF means on
-    EMS_Boiler.wWSelTemp     = data[2];
-    EMS_Boiler.wWCircPump    = (data[6] == 0xFF); // 0xFF means on
-    EMS_Boiler.wWDesiredTemp = data[8];
-    EMS_Boiler.wWComfort     = (data[EMS_OFFSET_UBAParameterWW_wwComfort] == 0x00);
+void _process_UBAParameterWW(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(1, 1)) {
+        EMS_Boiler.wWActivated   = (data[OFFSET(1)] == 0xFF); // 0xFF means on
+    }
+    if (EXISTS(2, 1)) {
+        EMS_Boiler.wWSelTemp     = data[OFFSET(2)];
+    }
+    if (EXISTS(6, 1)) {
+        EMS_Boiler.wWCircPump    = (data[OFFSET(6)] == 0xFF); // 0xFF means on
+    }
+    if (EXISTS(8, 1)) {
+        EMS_Boiler.wWDesiredTemp = data[OFFSET(8)];
+    }
+    if (EXISTS(EMS_OFFSET_UBAParameterWW_wwComfort, 1)) {
+        EMS_Boiler.wWComfort     = (data[OFFSET(EMS_OFFSET_UBAParameterWW_wwComfort)] == 0x00);
+    }
 
-    EMS_Sys_Status.emsRefreshed = true; // when we receieve this, lets force an MQTT publish
+    if (EXISTS(0, EMS_OFFSET_UBAParameterWW_wwComfort + 1)) {
+        EMS_Sys_Status.emsRefreshed = true; // when we receieve this, lets force an MQTT publish
+    }
 }
 
 /**
  * UBATotalUptimeMessage - type 0x14 - total uptime
  * received only after requested (not broadcasted)
  */
-void _process_UBATotalUptimeMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.UBAuptime        = _toLong(0, data);
-    EMS_Sys_Status.emsRefreshed = true; // when we receieve this, lets force an MQTT publish
+void _process_UBATotalUptimeMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, EMS_LONG_LEN)) {
+        EMS_Boiler.UBAuptime        = _toLong(OFFSET(0), data);
+        EMS_Sys_Status.emsRefreshed = true; // when we receieve this, lets force an MQTT publish
+    }
 }
 
 /*
  * UBAParametersMessage - type 0x16
  */
-void _process_UBAParametersMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.heating_temp = data[1];
-    EMS_Boiler.pump_mod_max = data[9];
-    EMS_Boiler.pump_mod_min = data[10];
+void _process_UBAParametersMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(1, 1)) {
+        EMS_Boiler.heating_temp = data[OFFSET(1)];
+    }
+    if (EXISTS(9, 1)) {
+        EMS_Boiler.pump_mod_max = data[OFFSET(9)];
+    }
+    if (EXISTS(10, 1)) {
+        EMS_Boiler.pump_mod_min = data[OFFSET(10)];
+    }
 }
 
 /**
  * UBAMonitorWWMessage - type 0x34 - warm water monitor. 19 bytes long
  * received every 10 seconds
  */
-void _process_UBAMonitorWWMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.wWCurTmp  = _toFloat(1, data);
-    EMS_Boiler.wWStarts  = _toLong(13, data);
-    EMS_Boiler.wWWorkM   = _toLong(10, data);
-    EMS_Boiler.wWOneTime = bitRead(data[5], 1);
-    EMS_Boiler.wWCurFlow = data[9];
+void _process_UBAMonitorWWMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(1, EMS_FLOAT_LEN)) {
+        EMS_Boiler.wWCurTmp  = _toFloat(OFFSET(1), data);
+    }
+    if (EXISTS(13, EMS_LONG_LEN)) {
+        EMS_Boiler.wWStarts  = _toLong(OFFSET(13), data);
+    }
+    if (EXISTS(10, EMS_LONG_LEN)) {
+        EMS_Boiler.wWWorkM   = _toLong(OFFSET(10), data);
+    }
+    if (EXISTS(5, 1)) {
+        EMS_Boiler.wWOneTime = bitRead(data[OFFSET(5)], 1);
+    }
+    if (EXISTS(9, 1)) {
+        EMS_Boiler.wWCurFlow = data[OFFSET(9)];
+    }
 }
 
 /**
  * UBAMonitorFast - type 0x18 - central heating monitor part 1 (25 bytes long)
  * received every 10 seconds
  */
-void _process_UBAMonitorFast(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.selFlowTemp = data[0];
-    EMS_Boiler.curFlowTemp = _toFloat(1, data);
-    EMS_Boiler.retTemp     = _toFloat(13, data);
+void _process_UBAMonitorFast(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, 1)) {
+        EMS_Boiler.selFlowTemp = data[OFFSET(0)];
+    }
+    if (EXISTS(1, EMS_FLOAT_LEN)) {
+        EMS_Boiler.curFlowTemp = _toFloat(OFFSET(1), data);
+    }
+    if (EXISTS(13, EMS_FLOAT_LEN)) {
+        EMS_Boiler.retTemp     = _toFloat(OFFSET(13), data);
+    }
 
-    uint8_t v          = data[7];
-    EMS_Boiler.burnGas = bitRead(v, 0);
-    EMS_Boiler.fanWork = bitRead(v, 2);
-    EMS_Boiler.ignWork = bitRead(v, 3);
-    EMS_Boiler.heatPmp = bitRead(v, 5);
-    EMS_Boiler.wWHeat  = bitRead(v, 6);
-    EMS_Boiler.wWCirc  = bitRead(v, 7);
+    if (EXISTS(7, 1)) {
+        uint8_t v          = data[OFFSET(7)];
+        EMS_Boiler.burnGas = bitRead(v, 0);
+        EMS_Boiler.fanWork = bitRead(v, 2);
+        EMS_Boiler.ignWork = bitRead(v, 3);
+        EMS_Boiler.heatPmp = bitRead(v, 5);
+        EMS_Boiler.wWHeat  = bitRead(v, 6);
+        EMS_Boiler.wWCirc  = bitRead(v, 7);
+    }
 
-    EMS_Boiler.curBurnPow = data[4];
-    EMS_Boiler.selBurnPow = data[3]; // burn power max setting
+    if (EXISTS(4, 1)) {
+        EMS_Boiler.curBurnPow = data[OFFSET(4)];
+    }
+    if (EXISTS(3, 1)) {
+        EMS_Boiler.selBurnPow = data[OFFSET(3)]; // burn power max setting
+    }
 
-    EMS_Boiler.flameCurr = _toFloat(15, data);
+    if (EXISTS(15, EMS_FLOAT_LEN)) {
+        EMS_Boiler.flameCurr = _toFloat(OFFSET(15), data);
+    }
 
-    // read the service code / installation status as appears on the display
-    EMS_Boiler.serviceCodeChar[0] = char(data[18]); // ascii character 1
-    EMS_Boiler.serviceCodeChar[1] = char(data[19]); // ascii character 2
+    if (EXISTS(18, 2)) {
+        // read the service code / installation status as appears on the display
+        EMS_Boiler.serviceCodeChar[0] = char(data[OFFSET(18)]); // ascii character 1
+        EMS_Boiler.serviceCodeChar[1] = char(data[OFFSET(19)]); // ascii character 2
+    }
 
-    if (data[17] == 0xFF) { // missing value for system pressure
-        EMS_Boiler.sysPress = 0;
-    } else {
-        EMS_Boiler.sysPress = (((float)data[17]) / (float)10);
+    if (EXISTS(17, 1)) {
+        if (data[OFFSET(17)] == 0xFF) { // missing value for system pressure
+            EMS_Boiler.sysPress = EMS_VALUE_FLOAT_NOTSET;
+        } else {
+            EMS_Boiler.sysPress = (((float)data[OFFSET(17)]) / (float)10);
+        }
     }
 
     // at this point do a quick check to see if the hot water or heating is active
@@ -966,13 +1014,25 @@ void _process_UBAMonitorFast(uint8_t type, uint8_t * data, uint8_t length) {
  * UBAMonitorSlow - type 0x19 - central heating monitor part 2 (27 bytes long)
  * received every 60 seconds
  */
-void _process_UBAMonitorSlow(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Boiler.extTemp     = _toFloat(0, data); // 0x8000 if not available
-    EMS_Boiler.boilTemp    = _toFloat(2, data); // 0x8000 if not available
-    EMS_Boiler.pumpMod     = data[9];
-    EMS_Boiler.burnStarts  = _toLong(10, data);
-    EMS_Boiler.burnWorkMin = _toLong(13, data);
-    EMS_Boiler.heatWorkMin = _toLong(19, data);
+void _process_UBAMonitorSlow(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, EMS_FLOAT_LEN)) {
+        EMS_Boiler.extTemp     = _toFloat(OFFSET(0), data); // 0x8000 if not available
+    }
+    if (EXISTS(2, EMS_FLOAT_LEN)) {
+        EMS_Boiler.boilTemp    = _toFloat(OFFSET(2), data); // 0x8000 if not available
+    }
+    if (EXISTS(9, 1)) {
+        EMS_Boiler.pumpMod     = data[OFFSET(9)];
+    }
+    if (EXISTS(10, EMS_LONG_LEN)) {
+        EMS_Boiler.burnStarts  = _toLong(OFFSET(10), data);
+    }
+    if (EXISTS(13, EMS_LONG_LEN)) {
+        EMS_Boiler.burnWorkMin = _toLong(OFFSET(13), data);
+    }
+    if (EXISTS(19, EMS_LONG_LEN)) {
+        EMS_Boiler.heatWorkMin = _toLong(OFFSET(19), data);
+    }
 }
 
 
@@ -981,11 +1041,13 @@ void _process_UBAMonitorSlow(uint8_t type, uint8_t * data, uint8_t length) {
  * For reading the temp values only
  * received every 60 seconds
  */
-void _process_RC10StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.setpoint_roomTemp = ((float)data[EMS_TYPE_RC10StatusMessage_setpoint]) / (float)2;
-    EMS_Thermostat.curr_roomTemp     = ((float)data[EMS_TYPE_RC10StatusMessage_curr]) / (float)10;
+void _process_RC10StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(EMS_TYPE_RC10StatusMessage_setpoint, 1) && EXISTS(EMS_TYPE_RC10StatusMessage_curr, 1)) {
+        EMS_Thermostat.setpoint_roomTemp = ((float)data[OFFSET(EMS_TYPE_RC10StatusMessage_setpoint)]) / (float)2;
+        EMS_Thermostat.curr_roomTemp     = ((float)data[OFFSET(EMS_TYPE_RC10StatusMessage_curr)]) / (float)10;
 
-    EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+        EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+    }
 }
 
 /**
@@ -993,11 +1055,13 @@ void _process_RC10StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
  * For reading the temp values only
  * received every 60 seconds
  */
-void _process_RC20StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.setpoint_roomTemp = ((float)data[EMS_TYPE_RC20StatusMessage_setpoint]) / (float)2;
-    EMS_Thermostat.curr_roomTemp     = _toFloat(EMS_TYPE_RC20StatusMessage_curr, data);
+void _process_RC20StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, 15)) {
+        EMS_Thermostat.setpoint_roomTemp = ((float)data[OFFSET(EMS_TYPE_RC20StatusMessage_setpoint)]) / (float)2;
+        EMS_Thermostat.curr_roomTemp     = _toFloat(OFFSET(EMS_TYPE_RC20StatusMessage_curr), data);
 
-    EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+        EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+    }
 }
 
 /**
@@ -1005,11 +1069,13 @@ void _process_RC20StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
  * For reading the temp values only
  * received every 60 seconds
  */
-void _process_RC30StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.setpoint_roomTemp = ((float)data[EMS_TYPE_RC30StatusMessage_setpoint]) / (float)2;
-    EMS_Thermostat.curr_roomTemp     = _toFloat(EMS_TYPE_RC30StatusMessage_curr, data);
+void _process_RC30StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, 14)) {
+        EMS_Thermostat.setpoint_roomTemp = ((float)data[OFFSET(EMS_TYPE_RC30StatusMessage_setpoint)]) / (float)2;
+        EMS_Thermostat.curr_roomTemp     = _toFloat(OFFSET(EMS_TYPE_RC30StatusMessage_curr), data);
 
-    EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+        EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+    }
 }
 
 /**
@@ -1017,35 +1083,39 @@ void _process_RC30StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
  * For reading the temp values only
  * received every 60 seconds
  */
-void _process_RC35StatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.setpoint_roomTemp = ((float)data[EMS_TYPE_RC35StatusMessage_setpoint]) / (float)2;
+void _process_RC35StatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, 16)) {
+        EMS_Thermostat.setpoint_roomTemp = ((float)data[OFFSET(EMS_TYPE_RC35StatusMessage_setpoint)]) / (float)2;
 
-    // check if temp sensor is unavailable
-    if ((data[0] == 0x7D) && (data[1] = 0x00)) {
-        EMS_Thermostat.curr_roomTemp = EMS_VALUE_FLOAT_NOTSET;
-    } else {
-        EMS_Thermostat.curr_roomTemp = _toFloat(EMS_TYPE_RC35StatusMessage_curr, data);
+        // check if temp sensor is unavailable
+        if ((data[OFFSET(0)] == 0x7D) && (data[OFFSET(1)] = 0x00)) {
+            EMS_Thermostat.curr_roomTemp = EMS_VALUE_FLOAT_NOTSET;
+        } else {
+            EMS_Thermostat.curr_roomTemp = _toFloat(OFFSET(EMS_TYPE_RC35StatusMessage_curr), data);
+        }
+        EMS_Thermostat.day_mode     = bitRead(data[OFFSET(EMS_OFFSET_RC35Get_mode_day)], 1); //get day mode flag
+        EMS_Sys_Status.emsRefreshed = true;                                          // triggers a send the values back via MQTT
     }
-    EMS_Thermostat.day_mode     = bitRead(data[EMS_OFFSET_RC35Get_mode_day], 1); //get day mode flag
-    EMS_Sys_Status.emsRefreshed = true;                                          // triggers a send the values back via MQTT
 }
 
 /**
  * type 0x0A - data from the Nefit Easy/TC100 thermostat (0x18) - 31 bytes long
  * The Easy has a digital precision of its floats to 2 decimal places, so values is divided by 100
  */
-void _process_EasyStatusMessage(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.curr_roomTemp     = ((float)(((data[EMS_TYPE_EasyStatusMessage_curr] << 8) + data[9]))) / 100;
-    EMS_Thermostat.setpoint_roomTemp = ((float)(((data[EMS_TYPE_EasyStatusMessage_setpoint] << 8) + data[11]))) / 100;
+void _process_EasyStatusMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(0, 31)) {
+        EMS_Thermostat.curr_roomTemp     = ((float)(((data[OFFSET(EMS_TYPE_EasyStatusMessage_curr)] << 8) + data[OFFSET(EMS_TYPE_EasyStatusMessage_curr + 1)]))) / 100;
+        EMS_Thermostat.setpoint_roomTemp = ((float)(((data[OFFSET(EMS_TYPE_EasyStatusMessage_setpoint)] << 8) + data[OFFSET(EMS_TYPE_EasyStatusMessage_setpoint + 1)]))) / 100;
 
-    EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+        EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+    }
 }
 
 /**
  * type 0xB0 - for reading the mode from the RC10 thermostat (0x17)
  * received only after requested
  */
-void _process_RC10Set(uint8_t type, uint8_t * data, uint8_t length) {
+void _process_RC10Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
     // mode not implemented yet
 }
 
@@ -1053,16 +1123,20 @@ void _process_RC10Set(uint8_t type, uint8_t * data, uint8_t length) {
  * type 0xA8 - for reading the mode from the RC20 thermostat (0x17)
  * received only after requested
  */
-void _process_RC20Set(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.mode = data[EMS_OFFSET_RC20Set_mode];
+void _process_RC20Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(EMS_OFFSET_RC20Set_mode, 1)) {
+        EMS_Thermostat.mode = data[OFFSET(EMS_OFFSET_RC20Set_mode)];
+    }
 }
 
 /**
  * type 0xA7 - for reading the mode from the RC30 thermostat (0x10)
  * received only after requested
  */
-void _process_RC30Set(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.mode = data[EMS_OFFSET_RC30Set_mode];
+void _process_RC30Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(EMS_OFFSET_RC30Set_mode, 1)) {
+        EMS_Thermostat.mode = data[OFFSET(EMS_OFFSET_RC30Set_mode)];
+    }
 }
 
 /**
@@ -1070,14 +1144,16 @@ void _process_RC30Set(uint8_t type, uint8_t * data, uint8_t length) {
  * Working Mode Heating Circuit 1 (HC1)
  * received only after requested
  */
-void _process_RC35Set(uint8_t type, uint8_t * data, uint8_t length) {
-    EMS_Thermostat.mode = data[EMS_OFFSET_RC35Set_mode];
+void _process_RC35Set(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
+    if (EXISTS(EMS_OFFSET_RC35Set_mode, 1)) {
+        EMS_Thermostat.mode = data[OFFSET(EMS_OFFSET_RC35Set_mode)];
+    }
 }
 
 /**
  * type 0xA3 - for external temp settings from the the RC* thermostats
  */
-void _process_RCOutdoorTempMessage(uint8_t type, uint8_t * data, uint8_t length) {
+void _process_RCOutdoorTempMessage(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
     // add support here if you're reading external sensors
 }
 
@@ -1085,16 +1161,16 @@ void _process_RCOutdoorTempMessage(uint8_t type, uint8_t * data, uint8_t length)
  * type 0x02 - get the firmware version and type of an EMS device
  * look up known devices via the product id and setup if not already set
  */
-void _process_Version(uint8_t type, uint8_t * data, uint8_t length) {
+void _process_Version(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
     // ignore short messages that we can't interpret
-    if (length < 3) {
+    if (!EXISTS(0, 3)) {
         return;
     }
 
     bool    do_save     = false;
-    uint8_t product_id  = data[0];
+    uint8_t product_id  = data[OFFSET(0)];
     char    version[10] = {0};
-    snprintf(version, sizeof(version), "%02d.%02d", data[1], data[2]);
+    snprintf(version, sizeof(version), "%02d.%02d", data[OFFSET(1)], data[OFFSET(2)]);
 
     // see if its a known boiler
     int  i         = 0;
@@ -1247,13 +1323,13 @@ void _ems_setThermostatModel(uint8_t thermostat_modelid) {
 /**
  * UBASetPoint 0x1A
  */
-void _process_SetPoints(uint8_t type, uint8_t * data, uint8_t length) {
+void _process_SetPoints(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
     /*
     if (EMS_Sys_Status.emsLogging == EMS_SYS_LOGGING_VERBOSE) {
-        if (length != 0) {
-            uint8_t setpoint = data[0];
-            uint8_t hk_power = data[1];
-            uint8_t ww_power = data[2];
+        if (EXISTS(0, 3)) {
+            uint8_t setpoint = data[OFFSET(0)];
+            uint8_t hk_power = data[OFFSET(1)];
+            uint8_t ww_power = data[OFFSET(2)];
             myDebug(" SetPoint=%d, hk_power=%d, ww_power=%d", setpoint, hk_power, ww_power);
         }
     }
@@ -1264,18 +1340,23 @@ void _process_SetPoints(uint8_t type, uint8_t * data, uint8_t length) {
  * process_RCTime - type 0x06 - date and time from a thermostat - 14 bytes long
  * common for all thermostats
  */
-void _process_RCTime(uint8_t type, uint8_t * data, uint8_t length) {
+void _process_RCTime(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length) {
     if ((EMS_Thermostat.model_id == EMS_MODEL_EASY) || (EMS_Thermostat.model_id == EMS_MODEL_BOSCHEASY)) {
         return; // not supported
     }
 
-    EMS_Thermostat.hour   = data[2];
-    EMS_Thermostat.minute = data[4];
-    EMS_Thermostat.second = data[5];
-    EMS_Thermostat.day    = data[3];
-    EMS_Thermostat.month  = data[1];
-    EMS_Thermostat.year   = data[0];
+    if (EXISTS(0, 6)) {
+        EMS_Thermostat.hour   = data[OFFSET(2)];
+        EMS_Thermostat.minute = data[OFFSET(4)];
+        EMS_Thermostat.second = data[OFFSET(5)];
+        EMS_Thermostat.day    = data[OFFSET(3)];
+        EMS_Thermostat.month  = data[OFFSET(1)];
+        EMS_Thermostat.year   = data[OFFSET(0)];
+    }
 }
+
+#undef OFFSET
+#undef EXISTS
 
 /**
  * Print the Tx queue - for debugging

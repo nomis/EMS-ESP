@@ -22,6 +22,9 @@
 // max length of a telegram, including CRC, for Rx and Tx.
 #define EMS_MAX_TELEGRAM_LENGTH 99
 
+#define EMS_FLOAT_LEN 2
+#define EMS_LONG_LEN 4
+
 // default values
 #define EMS_VALUE_INT_ON 1             // boolean true
 #define EMS_VALUE_INT_OFF 0            // boolean false
@@ -228,7 +231,7 @@ typedef struct {
 } _EMS_Thermostat;
 
 // call back function signature for processing telegram types
-typedef void (*EMS_processType_cb)(uint8_t type, uint8_t * data, uint8_t length);
+typedef void (*EMS_processType_cb)(uint8_t type, uint8_t offset, uint8_t * data, uint8_t length);
 
 // Definition for each EMS type, including the relative callback function
 typedef struct {
