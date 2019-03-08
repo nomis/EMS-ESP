@@ -390,6 +390,15 @@ char * _smallitoa(uint8_t value, char * buffer) {
     return buffer;
 }
 
+// for decimals 0 to 999, printed as a string
+char * _smallitoa3(uint16_t value, char * buffer) {
+    buffer[0] = ((value / 100) == 0) ? '0' : (value / 100) + '0';
+    buffer[1] = (((value % 100) / 10) == 0) ? '0' : ((value % 100) / 10) + '0';
+    buffer[2] = (value % 10) + '0';
+    buffer[3] = '\0';
+    return buffer;
+}
+
 /**
  * debug print a telegram to telnet/serial including the CRC
  * len is length in bytes including the CRC
@@ -404,11 +413,15 @@ void _debugPrintTelegram(const char * prefix, uint8_t * data, uint8_t len, const
     unsigned long upt = millis();
     strlcpy(output_str, "(", sizeof(output_str));
     strlcat(output_str, COLOR_CYAN, sizeof(output_str));
+    strlcat(output_str, _smallitoa((uint8_t)(upt / 86400000), buffer), sizeof(output_str));
+    strlcat(output_str, "+", sizeof(output_str));
     strlcat(output_str, _smallitoa((uint8_t)((upt / 3600000) % 24), buffer), sizeof(output_str));
     strlcat(output_str, ":", sizeof(output_str));
     strlcat(output_str, _smallitoa((uint8_t)((upt / 60000) % 60), buffer), sizeof(output_str));
     strlcat(output_str, ":", sizeof(output_str));
     strlcat(output_str, _smallitoa((uint8_t)((upt / 1000) % 60), buffer), sizeof(output_str));
+    strlcat(output_str, ".", sizeof(output_str));
+    strlcat(output_str, _smallitoa3(upt % 1000, buffer), sizeof(output_str));
     strlcat(output_str, COLOR_RESET, sizeof(output_str));
     strlcat(output_str, ") ", sizeof(output_str));
 
