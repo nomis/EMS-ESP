@@ -414,21 +414,27 @@ void _debugPrintTelegram(const char * prefix, uint8_t * data, uint8_t len, const
 
     strlcat(output_str, color, sizeof(output_str));
     strlcat(output_str, prefix, sizeof(output_str));
-    strlcat(output_str, " telegram: ", sizeof(output_str));
 
-    for (int i = 0; i < len - 1; i++) {
-        strlcat(output_str, _hextoa(data[i], buffer), sizeof(output_str));
-        strlcat(output_str, " ", sizeof(output_str)); // add space
-    }
+    if (len == 1) {
+        strlcat(output_str, " ", sizeof(output_str));
+        strlcat(output_str, _hextoa(data[0], buffer), sizeof(output_str));
+    } else if (len > 0) {
+        strlcat(output_str, " telegram: ", sizeof(output_str));
 
-    strlcat(output_str, "(CRC=", sizeof(output_str));
-    strlcat(output_str, _hextoa(data[len - 1], buffer), sizeof(output_str));
-    strlcat(output_str, ")", sizeof(output_str));
+        for (int i = 0; i < len - 1; i++) {
+            strlcat(output_str, _hextoa(data[i], buffer), sizeof(output_str));
+            strlcat(output_str, " ", sizeof(output_str)); // add space
+        }
 
-    // print number of data bytes only if its a valid telegram
-    if (len > 5) {
-        strlcat(output_str, ", #data=", sizeof(output_str));
-        strlcat(output_str, itoa(len - 5, buffer, 10), sizeof(output_str));
+        strlcat(output_str, "(CRC=", sizeof(output_str));
+        strlcat(output_str, _hextoa(data[len - 1], buffer), sizeof(output_str));
+        strlcat(output_str, ")", sizeof(output_str));
+
+        // print number of data bytes only if its a valid telegram
+        if (len > 5) {
+            strlcat(output_str, ", #data=", sizeof(output_str));
+            strlcat(output_str, itoa(len - 5, buffer, 10), sizeof(output_str));
+        }
     }
 
     strlcat(output_str, COLOR_RESET, sizeof(output_str));
@@ -565,6 +571,16 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
     if (length == 1) {
         uint8_t value = telegram[0]; // 1st byte of data package
 
+        if (value & 0x80) {
+            _debugPrintTelegram("Poll:", telegram, length, COLOR_WHITE);
+        } else if (value == EMS_TX_SUCCESS) {
+            _debugPrintTelegram("Success:", telegram, length, COLOR_WHITE);
+        } else if (value == EMS_TX_ERROR) {
+            _debugPrintTelegram("Error:", telegram, length, COLOR_RED);
+        } else {
+            _debugPrintTelegram("Query:", telegram, length, COLOR_WHITE);
+        }
+
         // check first for a Poll for us
         if (value == (EMS_ID_ME | 0x80)) {
             EMS_Sys_Status.emsPollTimestamp = millis(); // store when we received a last poll
@@ -602,7 +618,7 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
     // ignore anything that doesn't resemble a proper telegram package
     // minimal is 5 bytes, excluding CRC at the end
     if (length <= 4) {
-        //_debugPrintTelegram("Noisy data:", telegram, length, COLOR_RED);
+        _debugPrintTelegram("Noisy data:", telegram, length, COLOR_RED);
         return;
     }
 
@@ -754,7 +770,7 @@ void _processType(uint8_t * telegram, uint8_t length) {
 
     // if its an echo of ourselves from the master UBA, ignore
     if (src == EMS_ID_ME) {
-        //_debugPrintTelegram("Telegram echo:", telegram, length, COLOR_BLUE);
+        _debugPrintTelegram("Telegram echo:", telegram, length, COLOR_BLUE);
         return;
     }
 
