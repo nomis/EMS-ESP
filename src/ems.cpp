@@ -1191,7 +1191,9 @@ void _process_Version(uint8_t type, uint8_t * data, uint8_t length) {
  */
 void ems_discoverModels() {
     // boiler
-    ems_doReadCommand(EMS_TYPE_Version, EMS_Boiler.type_id); // get version details of boiler
+    if (EMS_Boiler.type_id != EMS_ID_NONE) {
+        ems_doReadCommand(EMS_TYPE_Version, EMS_Boiler.type_id); // get version details of boiler
+    }
 
     // thermostat
     // if it hasn't been set, auto discover it
@@ -1364,11 +1366,13 @@ void ems_getThermostatValues() {
  * Generic function to return various settings from the thermostat
  */
 void ems_getBoilerValues() {
-    ems_doReadCommand(EMS_TYPE_UBAMonitorFast, EMS_Boiler.type_id); // get boiler stats, instead of waiting 10secs for the broadcast
-    ems_doReadCommand(EMS_TYPE_UBAMonitorSlow, EMS_Boiler.type_id); // get more boiler stats, instead of waiting 60secs for the broadcast
-    ems_doReadCommand(EMS_TYPE_UBAParameterWW, EMS_Boiler.type_id); // get Warm Water values
-    ems_doReadCommand(EMS_TYPE_UBAParametersMessage, EMS_Boiler.type_id);  // get MC10 boiler values
-    ems_doReadCommand(EMS_TYPE_UBATotalUptimeMessage, EMS_Boiler.type_id); // get uptime from boiler
+    if (EMS_Boiler.type_id != EMS_ID_NONE) {
+        ems_doReadCommand(EMS_TYPE_UBAMonitorFast, EMS_Boiler.type_id); // get boiler stats, instead of waiting 10secs for the broadcast
+        ems_doReadCommand(EMS_TYPE_UBAMonitorSlow, EMS_Boiler.type_id); // get more boiler stats, instead of waiting 60secs for the broadcast
+        ems_doReadCommand(EMS_TYPE_UBAParameterWW, EMS_Boiler.type_id); // get Warm Water values
+        ems_doReadCommand(EMS_TYPE_UBAParametersMessage, EMS_Boiler.type_id);  // get MC10 boiler values
+        ems_doReadCommand(EMS_TYPE_UBATotalUptimeMessage, EMS_Boiler.type_id); // get uptime from boiler
+    }
 }
 
 /**
