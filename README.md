@@ -61,7 +61,7 @@ The code and circuit has been tested with a few ESP8266 development boards such 
 ## Getting Started
 
 1. Either build the circuit described below or purchase a ready built board
-2. Get an ESP8266 dev board and connect the 2 EMS output lines from the boiler to the circuit and the Rx and Tx out to ESP pins D7 and D8 respectively. To prevent interference with the serial ports and debug messages we use these pins RX1 and TX1. The EMS connection can either be the 12-15V AC direct from the thermostat bus line or from the 3.5" Service Jack at the front of the boiler.
+2. Get an ESP8266 dev board and connect the 2 EMS output lines from the boiler to the circuit and the Rx and Tx out to ESP pins D7 and D8 respectively. To prevent interference with the serial ports and debug messages we use these pins RX1 and TX1. The EMS connection can either be the 12-15V DC direct from the thermostat bus line or from the 3.5" Service Jack at the front of the boiler.
 3. Optionally connect an external LED or decide to use the onboard ESP8266 LED. This will flash when there is an error on the EMS bus line or stay solid when it's connected to the EMS bus.
 4. Modify `my_custom.h` if needed
 5. Build and upload the firmware to the ESP8266 device. I used PlatformIO with Visual Studio Code but using Atom or a command-line is just as easy if you don't plan to make many code changes.
@@ -110,7 +110,7 @@ The EMS circuit will work with both 3.3V and 5V. It's easiest though to power di
 - via the USB if your dev board has one
 - using an external 5V power supply into the 5V vin on the board
 - powering from the 3.5" service jack on the boiler. This will give you 8V so you need a buck converter (like a [Pololu D24C22F5](https://www.pololu.com/product/2858)) to step this down to 5V to provide enough power to the ESP8266 (250mA at least)
-- powering from the EMS line, which is 15V A/C and using a buck converter as described above. Note the current design has stability issues when sending packages in this configuration so this is not recommended yet if you plan to many send commands to the thermostat or boiler.
+- powering from the EMS line, which is 15V DC and using a buck converter as described above. Note the current design has stability issues when sending packages in this configuration so this is not recommended yet if you plan to many send commands to the thermostat or boiler.
 
 | With Power Circuit                              |
 | ------------------------------------------ |
