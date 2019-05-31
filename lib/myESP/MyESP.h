@@ -51,7 +51,7 @@
 
 // Telnet
 #define TELNET_SERIAL_BAUD 115200
-#define TELNET_MAX_COMMAND_LENGTH 80 // length of a command
+#define TELNET_MAX_COMMAND_LENGTH 100 // length of a command
 #define TELNET_EVENT_CONNECT 1
 #define TELNET_EVENT_DISCONNECT 0
 
