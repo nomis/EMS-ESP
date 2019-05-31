@@ -158,12 +158,15 @@ void ems_init() {
     EMS_Sys_Status.emsRxStatus      = EMS_RX_STATUS_IDLE;
     EMS_Sys_Status.emsTxStatus      = EMS_TX_STATUS_IDLE;
     EMS_Sys_Status.emsRefreshed     = false;
-    EMS_Sys_Status.emsPollEnabled   = false; // start up with Poll disabled
+    EMS_Sys_Status.emsPollEnabled   = 0; // start up with Poll disabled
     EMS_Sys_Status.emsBusConnected  = false;
     EMS_Sys_Status.emsRxTimestamp   = 0;
     EMS_Sys_Status.emsTxCapable     = false;
     EMS_Sys_Status.emsPollTimestamp = 0;
     EMS_Sys_Status.txRetryCount     = 0;
+    EMS_Sys_Status.emsBreakTime     = EMS_TX_BRK_WAIT;
+    EMS_Sys_Status.emsMyId          = EMS_ID_ME;
+    EMS_Sys_Status.emsMyDelay       = 100;
 
     // thermostat
     EMS_Thermostat.setpoint_roomTemp = EMS_VALUE_FLOAT_NOTSET;
@@ -485,7 +488,7 @@ void _ems_sendTelegram() {
     }
 
     // create header
-    EMS_TxTelegram.data[0] = EMS_ID_ME; // src
+    EMS_TxTelegram.data[0] = 0x80 | EMS_Sys_Status.emsMyId; // src
     // dest
     if (EMS_TxTelegram.action == EMS_TX_TELEGRAM_WRITE) {
         EMS_TxTelegram.data[1] = EMS_TxTelegram.dest;
@@ -595,18 +598,19 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
         }
 
         // check first for a Poll for us
-        if (value == (EMS_ID_ME | 0x80)) {
+        if ((value & 0x7F) == EMS_Sys_Status.emsMyId && EMS_Sys_Status.emsPollEnabled > 0) {
+            //EMS_Sys_Status.emsPollEnabled--;
+
             EMS_Sys_Status.emsPollTimestamp = millis(); // store when we received a last poll
             EMS_Sys_Status.emsTxCapable     = true;
 
             // do we have something to send thats waiting in the Tx queue? if so send it if the Queue is not in a wait state
             if ((!EMS_TxQueue.isEmpty()) && (EMS_Sys_Status.emsTxStatus == EMS_TX_STATUS_IDLE)) {
+                delayMicroseconds(EMS_Sys_Status.emsMyDelay);
                 _ems_sendTelegram(); // perform the read/write command immediately
             } else {
                 // nothing to send so just send a poll acknowledgement back
-                if (EMS_Sys_Status.emsPollEnabled) {
-                    emsaurt_tx_poll();
-                }
+                emsaurt_tx_poll();
             }
         } else if (EMS_Sys_Status.emsTxStatus == EMS_TX_STATUS_WAIT) {
             // this may be a single byte 01 (success) or 04 (error) from a recent write command?
@@ -698,7 +702,7 @@ void _ems_processTelegram(uint8_t * telegram, uint8_t length) {
         strlcat(output_str, " -> ", sizeof(output_str));
 
         // destination
-        if (dest == EMS_ID_ME) {
+        if (dest == EMS_Sys_Status.emsMyId) {
             strlcat(output_str, "me", sizeof(output_str));
             strlcpy(color_s, COLOR_YELLOW, sizeof(color_s));
         } else if (dest == EMS_ID_NONE) {
@@ -782,7 +786,7 @@ void _processType(uint8_t * telegram, uint8_t length) {
     uint8_t src = telegram[0] & 0x7F; // removing 8th bit as we deal with both reads and writes here
 
     // if its an echo of ourselves from the master UBA, ignore
-    if (src == EMS_ID_ME) {
+    if ((src & 0x7F) == EMS_Sys_Status.emsMyId) {
         _debugPrintTelegram("Telegram echo:", telegram, length, COLOR_BLUE);
         return;
     }
@@ -799,7 +803,7 @@ void _processType(uint8_t * telegram, uint8_t length) {
     // at this point we can assume Txstatus is EMS_TX_STATUS_WAIT so we just sent a read/write/validate
     // for READ, WRITE or VALIDATE the dest (telegram[1]) is always us, so check for this
     // and if not we probably didn't get any response so remove the last Tx from the queue and process the telegram anyway
-    if ((telegram[1] & 0x7F) != EMS_ID_ME) {
+    if ((telegram[1] & 0x7F) != EMS_Sys_Status.emsMyId) {
         _removeTxQueue();
         _ems_processTelegram(telegram, length);
         return;
@@ -900,11 +904,9 @@ void _checkActive() {
     if (EMS_Boiler.wWCurFlow != EMS_VALUE_INT_NOTSET && EMS_Boiler.burnGas != EMS_VALUE_INT_NOTSET) {
         // hot tap water, using flow to check insread of the burner power
         EMS_Boiler.tapwaterActive = ((EMS_Boiler.wWCurFlow != 0) && (EMS_Boiler.burnGas == EMS_VALUE_INT_ON));
-    }
 
-    if (EMS_Boiler.selFlowTemp != EMS_VALUE_INT_NOTSET && EMS_Boiler.burnGas != EMS_VALUE_INT_NOTSET) {
         // heating
-        EMS_Boiler.heatingActive = ((EMS_Boiler.selFlowTemp >= EMS_BOILER_SELFLOWTEMP_HEATING) && (EMS_Boiler.burnGas == EMS_VALUE_INT_ON));
+        EMS_Boiler.heatingActive = ((EMS_Boiler.wWCurFlow == 0) && (EMS_Boiler.burnGas == EMS_VALUE_INT_ON));
     }
 }
 
@@ -1574,10 +1576,12 @@ void ems_scanDevices() {
         Device_Ids.push_back(bt.type_id);
     }
 
+#if 0
     // copy over thermostats
     for (_Thermostat_Type tt : Thermostat_Types) {
         Device_Ids.push_back(tt.type_id);
     }
+#endif
     // remove duplicates and reserved IDs (like our own device)
     Device_Ids.sort();
     Device_Ids.unique();
@@ -1916,7 +1920,7 @@ void ems_setWarmTapWaterActivated(bool activated) {
     EMS_TxTelegram.forceRefresh       = true; // send new value to MQTT after successful write
 
     // create header
-    EMS_TxTelegram.data[0] = EMS_ID_ME;             // src
+    EMS_TxTelegram.data[0] = EMS_Sys_Status.emsMyId;             // src
     EMS_TxTelegram.data[1] = EMS_TxTelegram.dest;   // dest
     EMS_TxTelegram.data[2] = EMS_TxTelegram.type;   // type
     EMS_TxTelegram.data[3] = EMS_TxTelegram.offset; // offset

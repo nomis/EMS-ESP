@@ -26,6 +26,7 @@ os_event_t recvTaskQueue[EMSUART_recvTaskQueueLen]; // our Rx queue
 static void ICACHE_RAM_ATTR emsuart_rx_intr_handler(void * para) {
     static uint8_t length;
     static uint8_t uart_buffer[EMS_MAXBUFFERSIZE];
+    bool complete = false;
 
     // is a new buffer? if so init the thing for a new telegram
     if (EMS_Sys_Status.emsRxStatus == EMS_RX_STATUS_IDLE) {
@@ -40,6 +41,11 @@ static void ICACHE_RAM_ATTR emsuart_rx_intr_handler(void * para) {
             length = 0;
         }
         uart_buffer[length++] = USF(EMSUART_UART);
+    }
+
+    if (length == 1 && uart_buffer[0] != 0 && (uart_buffer[0] & 0x80) == 0) {
+        uart_buffer[length++] = 0;
+        complete = true;
     }
 
     // clear Rx FIFO full and Rx FIFO timeout interrupts
@@ -59,7 +65,10 @@ static void ICACHE_RAM_ATTR emsuart_rx_intr_handler(void * para) {
     // BREAK detection = End of EMS data block
     if (USIS(EMSUART_UART) & ((1 << UIBD))) {
         U0IC = (1 << UIBD); // INT clear the BREAK detect interrupt
+        complete = true;
+    }
 
+    if (complete) {
         if (length > 1) {
             _EMSRxBuf * pEMSRxBuf = &emsRxBufs[emsRxBufWriteIdx];
 
@@ -152,7 +161,7 @@ void ICACHE_FLASH_ATTR emsuart_init() {
     // UCTOT = RX TimeOut Threshold (7bit) = want this when no more data after 2 characters. (default is 2)
     // UCFFT = RX FIFO Full Threshold (7 bit) = want this to be 32 for a maximum size packet. (default was 127).
     USC1(EMSUART_UART) = 0;                                              // reset config first
-    USC1(EMSUART_UART) = (32 << UCFFT) | (0x02 << UCTOT) | (1 << UCTOE); // enable interupts
+    USC1(EMSUART_UART) = (1 << UCFFT) | (0 << UCTOE); // enable interupts
 
     // set interrupts for triggers
     USIC(EMSUART_UART) = 0xffff; // clear all interupts
@@ -195,7 +204,7 @@ void ICACHE_FLASH_ATTR emsuart_tx_brk() {
     // To create a 11-bit <BRK> we set TXD_BRK bit so the break signal will
     // automatically be sent when the tx fifo is empty
     USC0(EMSUART_UART) |= (1 << UCBRK);  // set bit
-    delayMicroseconds(EMS_TX_BRK_WAIT);  // 2070 - based on trial and error using an oscilloscope
+    delayMicroseconds(EMS_Sys_Status.emsBreakTime);  // 2070 - based on trial and error using an oscilloscope
     USC0(EMSUART_UART) &= ~(1 << UCBRK); // clear bit
 }
 
@@ -213,6 +222,6 @@ void ICACHE_FLASH_ATTR emsuart_tx_buffer(uint8_t * buf, uint8_t len) {
  * Send the Poll (our own ID) to Tx as a single byte and end with a <BRK>
  */
 void ICACHE_FLASH_ATTR emsaurt_tx_poll() {
-    USF(EMSUART_UART) = EMS_ID_ME;
+    USF(EMSUART_UART) = 0x80 | EMS_Sys_Status.emsMyId;
     emsuart_tx_brk();
 }

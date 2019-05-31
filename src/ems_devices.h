@@ -115,13 +115,13 @@ const _Boiler_Type Boiler_Types[] = {
     {EMS_MODEL_UBA, 115, 0x08, "Nefit Topline Compact"},
     {EMS_MODEL_UBA, 203, 0x08, "Buderus Logamax U122"},
     {EMS_MODEL_UBA, 64, 0x08, "Sieger BK15 Boiler/Nefit Smartline"},
-    {EMS_MODEL_UBA, 190, 0x09, "BC10 Base Controller"},
-    {EMS_MODEL_UBA, 114, 0x09, "BC10 Base Controller"},
-    {EMS_MODEL_UBA, 125, 0x09, "BC25 Base Controller"},
-    {EMS_MODEL_UBA, 68, 0x09, "RFM20 Receiver"},
+//    {EMS_MODEL_UBA, 190, 0x09, "BC10 Base Controller"},
+//    {EMS_MODEL_UBA, 114, 0x09, "BC10 Base Controller"},
+//    {EMS_MODEL_UBA, 125, 0x09, "BC25 Base Controller"},
+//    {EMS_MODEL_UBA, 68, 0x09, "RFM20 Receiver"},
     {EMS_MODEL_UBA, 95, 0x08, "Bosch Condens 2500"},
-    {EMS_MODEL_UBA, 251, 0x21, "MM10 Mixer Module"},  // warning, fake product id!
-    {EMS_MODEL_UBA, 250, 0x11, "WM10 Switch Module"}, // warning, fake product id!
+//    {EMS_MODEL_UBA, 251, 0x21, "MM10 Mixer Module"},  // warning, fake product id!
+//    {EMS_MODEL_UBA, 250, 0x11, "WM10 Switch Module"}, // warning, fake product id!
 
 };
 

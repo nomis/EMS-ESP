@@ -88,7 +88,7 @@ typedef struct {
     uint16_t         emsRxPgks;        // received
     uint16_t         emsTxPkgs;        // sent
     uint16_t         emxCrcErr;        // CRC errors
-    bool             emsPollEnabled;   // flag enable the response to poll messages
+    uint8_t          emsPollEnabled;   // flag enable the response to poll messages
     _EMS_SYS_LOGGING emsLogging;       // logging
     bool             emsRefreshed;     // fresh data, needs to be pushed out to MQTT
     bool             emsBusConnected;  // is there an active bus
@@ -96,6 +96,9 @@ typedef struct {
     unsigned long    emsPollTimestamp; // timestamp of last EMS poll sent to us
     bool             emsTxCapable;     // able to send via Tx
     uint8_t          txRetryCount;     // # times the last Tx was re-sent
+    uint16_t         emsBreakTime;
+    uint8_t          emsMyId;
+    uint16_t         emsMyDelay;
 } _EMS_Sys_Status;
 
 // The Tx send package

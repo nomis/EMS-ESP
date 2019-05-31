@@ -785,6 +785,44 @@ void TelnetCommandCallback(uint8_t wc, const char * commandLine) {
         }
     }
 
+    if (strcmp(first_cmd, "break") == 0) {
+        if (wc == 2) {
+            EMS_Sys_Status.emsBreakTime = _readIntNumber();
+            EMS_Sys_Status.emsPollEnabled = 1;
+            ems_scanDevices();
+            ok = true;
+        }
+    }
+
+    if (strcmp(first_cmd, "me") == 0) {
+        if (wc == 2) {
+            EMS_Sys_Status.emsMyId = _readIntNumber();
+            EMS_Sys_Status.emsPollEnabled = 1;
+            ems_scanDevices();
+            ok = true;
+        }
+    }
+
+    if (strcmp(first_cmd, "delay") == 0) {
+        if (wc == 2) {
+            EMS_Sys_Status.emsMyDelay = _readIntNumber();
+            EMS_Sys_Status.emsPollEnabled = 1;
+            ems_scanDevices();
+            ok = true;
+        }
+    }
+
+    if (strcmp(first_cmd, "tx") == 0) {
+        if (wc == 2) {
+            if (_readIntNumber()) {
+                USC0(EMSUART_UART) |= (1 << UCBRK);
+            } else {
+                USC0(EMSUART_UART) &= ~(1 << UCBRK);
+            }
+            ok = true;
+        }
+    }
+
     // thermostat commands
     if (strcmp(first_cmd, "thermostat") == 0) {
         if (wc == 3) {
