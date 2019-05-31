@@ -680,7 +680,9 @@ void MyESP::_telnetHandle() {
             if (!_suspendOutput) {
                 _consoleShowHelp();
             } else {
-                _command[charsRead++] = c; // add it to buffer as its part of the string entered
+                if (charsRead < TELNET_MAX_COMMAND_LENGTH - 1) {
+                    _command[charsRead++] = c; // add it to buffer as its part of the string entered
+                }
             }
             break;
         case 0x04: // EOT, CTRL-D
@@ -689,7 +691,7 @@ void MyESP::_telnetHandle() {
             break;
         default:
             _suspendOutput = true;
-            if (charsRead < TELNET_MAX_COMMAND_LENGTH) {
+            if (charsRead < TELNET_MAX_COMMAND_LENGTH - 1) {
                 _command[charsRead++] = c;
             }
             _command[charsRead] = '\0'; // just in case
