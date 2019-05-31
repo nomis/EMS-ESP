@@ -95,6 +95,7 @@ typedef struct {
     unsigned long    emsRxTimestamp;   // timestamp of last EMS message received
     unsigned long    emsPollTimestamp; // timestamp of last EMS poll sent to us
     bool             emsTxCapable;     // able to send via Tx
+    bool             emsTxEnabled;
     uint8_t          txRetryCount;     // # times the last Tx was re-sent
 } _EMS_Sys_Status;
 

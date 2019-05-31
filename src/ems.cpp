@@ -162,6 +162,7 @@ void ems_init() {
     EMS_Sys_Status.emsBusConnected  = false;
     EMS_Sys_Status.emsRxTimestamp   = 0;
     EMS_Sys_Status.emsTxCapable     = false;
+    EMS_Sys_Status.emsTxEnabled     = true;
     EMS_Sys_Status.emsPollTimestamp = 0;
     EMS_Sys_Status.txRetryCount     = 0;
 
@@ -275,6 +276,9 @@ uint8_t ems_getThermostatModel() {
 }
 
 bool ems_getTxCapable() {
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        EMS_Sys_Status.emsTxCapable = false;
+    }
     if ((millis() - EMS_Sys_Status.emsPollTimestamp) > EMS_POLL_TIMEOUT) {
         EMS_Sys_Status.emsTxCapable = false;
     }
@@ -1453,6 +1457,10 @@ void ems_getThermostatValues() {
         return;
     }
 
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     uint8_t model_id = EMS_Thermostat.model_id;
     uint8_t type     = EMS_Thermostat.type_id;
 
@@ -1565,6 +1573,10 @@ char * ems_getBoilerDescription(char * buffer) {
  * Find the versions of our connected devices
  */
 void ems_scanDevices() {
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     myDebug("Scanning EMS bus for devices.");
 
     std::list<uint8_t> Device_Ids; // new list
@@ -1630,6 +1642,10 @@ void ems_doReadCommand(uint8_t type, uint8_t dest, bool forceRefresh) {
         return;
     }
 
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx
     EMS_TxTelegram.timestamp       = millis();            // set timestamp
     EMS_Sys_Status.txRetryCount    = 0;                   // reset retry counter
@@ -1667,6 +1683,10 @@ void ems_sendRawTelegram(char * telegram) {
     uint8_t count = 0;
     char *  p;
     char    value[10] = {0};
+
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
 
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx
     EMS_TxTelegram.timestamp       = millis();            // set timestamp
@@ -1712,6 +1732,10 @@ void ems_setThermostatTemp(float temperature) {
 
     if (!EMS_Thermostat.write_supported) {
         myDebug("Write not supported for this model Thermostat");
+        return;
+    }
+
+    if (!EMS_Sys_Status.emsTxEnabled) {
         return;
     }
 
@@ -1776,6 +1800,10 @@ void ems_setThermostatMode(uint8_t mode) {
         return;
     }
 
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     uint8_t model_id = EMS_Thermostat.model_id;
     uint8_t type     = EMS_Thermostat.type_id;
 
@@ -1820,6 +1848,10 @@ void ems_setWarmWaterTemp(uint8_t temperature) {
         return;
     }
 
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     myDebug("Setting boiler warm water temperature to %d C", temperature);
 
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx
@@ -1846,6 +1878,10 @@ void ems_setWarmWaterTemp(uint8_t temperature) {
  * Set the warm water mode to comfort to Eco/Comfort
  */
 void ems_setWarmWaterModeComfort(bool comfort) {
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     myDebug("Setting boiler warm water to comfort mode %s\n", comfort ? "Comfort" : "Eco");
 
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx
@@ -1869,6 +1905,10 @@ void ems_setWarmWaterModeComfort(bool comfort) {
  * true = on, false = off
  */
 void ems_setWarmWaterActivated(bool activated) {
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     myDebug("Setting boiler warm water %s", activated ? "on" : "off");
 
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx
@@ -1892,6 +1932,10 @@ void ems_setWarmWaterActivated(bool activated) {
  * Using the type 0x1D to put the boiler into Test mode. This may be shown on the boiler with a flashing 'T'
  */
 void ems_setWarmTapWaterActivated(bool activated) {
+    if (!EMS_Sys_Status.emsTxEnabled) {
+        return;
+    }
+
     myDebug("Setting boiler warm tap water %s", activated ? "on" : "off");
 
     _EMS_TxTelegram EMS_TxTelegram = EMS_TX_TELEGRAM_NEW; // create new Tx

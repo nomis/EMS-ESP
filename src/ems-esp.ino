@@ -82,6 +82,7 @@ command_t PROGMEM project_cmds[] = {
     {"set dallas_gpio <pin>", "set the pin for the external Dallas temperature sensor (D5=14)"},
     {"set thermostat_type <hex type ID>", "set the thermostat type id (e.g. 10 for 0x10)"},
     {"set boiler_type <hex type ID>", "set the boiler type id (e.g. 8 for 0x08)"},
+    {"set tx <on | off>", "enable/disable TX"},
     {"info", "show the values"},
     {"log <n | b | t | r | v>", "set logging mode to none, basic, thermostat only, raw or verbose"},
     {"publish", "publish values to MQTT"},
@@ -620,6 +621,14 @@ bool FSCallback(MYESP_FSACTION action, JsonObject & json) {
             EMS_Boiler.type_id = EMSESP_BOILER_TYPE; // set default
             ok                 = false;
         }
+
+        // tx
+        if (json.containsKey("tx")) {
+            EMS_Sys_Status.emsTxEnabled = (bool)json["tx"];
+        } else {
+            EMS_Sys_Status.emsTxEnabled = true; // default value
+            ok                        = false;
+        }
     }
 
     if (action == MYESP_FSACTION_SAVE) {
@@ -628,6 +637,7 @@ bool FSCallback(MYESP_FSACTION action, JsonObject & json) {
         json["dallas_gpio"]     = EMSESP_Status.dallas_gpio;
         json["thermostat_type"] = EMS_Thermostat.type_id;
         json["boiler_type"]     = EMS_Boiler.type_id;
+        json["tx"]              = EMS_Sys_Status.emsTxEnabled;
     }
 
     return ok; // all ok
@@ -679,6 +689,17 @@ bool SettingsCallback(MYESP_FSACTION action, uint8_t wc, const char * setting, c
             EMS_Boiler.type_id = ((wc == 2) ? (uint8_t)strtol(value, 0, 16) : EMS_ID_NONE);
             ok                 = true;
         }
+
+        // tx
+        if ((strcmp(setting, "tx") == 0) && (wc == 2)) {
+            if (strcmp(value, "on") == 0) {
+                EMS_Sys_Status.emsTxEnabled = true;
+                ok                        = true;
+            } else if (strcmp(value, "off") == 0) {
+                EMS_Sys_Status.emsTxEnabled = false;
+                ok                        = true;
+            }
+        }
     }
 
     if (action == MYESP_FSACTION_LIST) {
@@ -699,6 +720,8 @@ bool SettingsCallback(MYESP_FSACTION action, uint8_t wc, const char * setting, c
         } else {
             myDebug("  boiler_type=%02X", EMS_Boiler.type_id);
         }
+
+        myDebug("  tx=%s", EMS_Sys_Status.emsTxEnabled ? "on" : "off");
     }
 
     return ok;
