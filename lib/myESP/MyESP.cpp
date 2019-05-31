@@ -288,7 +288,11 @@ void MyESP::_wifi_setup() {
     jw.enableAP(false);
     jw.setConnectTimeout(WIFI_CONNECT_TIMEOUT);
     jw.setReconnectTimeout(WIFI_RECONNECT_INTERVAL);
+#ifdef WIFI_SSID
+    jw.enableAPFallback(false);
+#else
     jw.enableAPFallback(true);                 // AP mode only as fallback
+#endif
     jw.enableSTA(true);                        // Enable STA mode (connecting to a router)
     jw.enableScan(false);                      // Configure it to scan available networks and connect in order of dBm
     jw.cleanNetworks();                        // Clean existing network configuration
