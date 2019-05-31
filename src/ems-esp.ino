@@ -32,7 +32,7 @@ DS18 ds18;
 #define myDebug_P(...) myESP.myDebug_P(__VA_ARGS__)
 
 // timers, all values are in seconds
-#define PUBLISHVALUES_TIME 120 // every 2 minutes publish MQTT values
+#define PUBLISHVALUES_TIME 60 // every 2 minutes publish MQTT values
 Ticker publishValuesTimer;
 
 #define SYSTEMCHECK_TIME 20 // every 20 seconds check if Boiler is online
